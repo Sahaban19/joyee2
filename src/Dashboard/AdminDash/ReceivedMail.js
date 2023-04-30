@@ -1,0 +1,102 @@
+import axios from "axios"
+import { useState,useEffect } from "react"
+import 'bootstrap/dist/css/bootstrap.min.css';
+import Table from 'react-bootstrap/Table'
+import Button from 'react-bootstrap/Button'
+
+const ReceivedMail = ({ adminId }) => {
+
+    const [mails, setMails] = useState(null)
+    const [reload, setReload] = useState(false)
+    let _id = adminId
+   
+    useEffect(() => {
+        axios.post("http://localhost:3500/mails/admins", { _id })
+            .then(response => {
+                const received_mails = response.data
+                setMails(received_mails)
+            })
+            .catch(error=>{
+                console.log(error)
+            })
+    }, [reload])
+
+    const onAcceptClicked = (mail_id) => {
+        
+        const status = 'Granted'
+        let _id = mail_id
+        
+        axios.patch("http://localhost:3500/mails/admins", { _id, status })
+            .then(response => {
+                console.log(_id, status)
+                let data = response.data
+                console.log(data.message)
+                setReload(!reload)
+            })
+            .catch(error => {
+                console.log(error)
+            });
+    }  
+
+    const onRejectClicked = (mail_id) => {
+        const status = 'Denied'
+        let _id = mail_id
+
+        axios.patch("http://localhost:3500/mails/admins", { _id, status })
+            .then(response => { 
+                let data = response.data
+                console.log(data.message)
+                setReload(!reload)
+        })
+            .catch(error => {
+                console.log(error)
+        });
+           
+    }    
+
+    return (
+        <div className='received'>
+            <div className='new2'>
+        
+        {mails?.length ?(
+            mails.map(mail=>(
+            <div className='box'>
+                <Table striped bordered hover>
+                    <thead>
+                        <tr><div className='subhead1'>
+                            <th>Subject</th>
+                            <th>Days</th>
+                            <th>Sender</th></div>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr key={mail._id}>
+                            <td>{mail.subject}</td>
+                            <td>{mail.days}</td>
+                            <td>{mail.senderName}</td>
+                        </tr>
+                    </tbody>
+                </Table>
+                <div key={mail._id} className='row'>
+                <p className='text_area'>{mail.body}</p>
+                        <div className='buttons'>
+                            <Button className='grant' variant='success' onClick={()=>onAcceptClicked(mail._id)}><div className='subhead1'>Grant</div></Button>
+                            <Button className='deny' variant='danger' onClick={()=>onRejectClicked(mail._id)}>Deny</Button>
+                        </div>
+                </div>
+
+                </div>
+                
+            ))
+
+        ):<p><div className='head1'> No mails Found</div> </p>}
+        </div>
+        </div>
+     
+
+    )
+        
+    
+}
+
+export default ReceivedMail
